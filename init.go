@@ -42,7 +42,7 @@ func Subscribe(channels []string) (Channel, error) {
 	}
 	r, err := hubInstance.Subscribe(channels)
 	if err != nil {
-		log.Error("pubsub subscribe failed: %+v", err)
+		log.Errorf("pubsub subscribe failed: %+v", err)
 		return nil, err
 	}
 	log.Debug("subscibe to %v", channels)
@@ -65,7 +65,7 @@ func makeHub() Hub {
 		if ok {
 			h, err := d.Create()
 			if err != nil {
-				log.Error("unable to connect to %s pubsub server: %+v", name, err)
+				log.Errorf("unable to connect to %s pubsub server: %+v", name, err)
 			}
 			log.Info("connected to %s pubsub", name)
 			return h

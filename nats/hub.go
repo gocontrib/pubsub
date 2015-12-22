@@ -50,7 +50,6 @@ func (h *hub) Publish(channels []string, msg interface{}) {
 	go func() {
 		var data, err = pubsub.Marshal(msg)
 		if err != nil {
-			log.Error("json.Marshal failed: %+v", err)
 			return
 		}
 		for _, cn := range channels {

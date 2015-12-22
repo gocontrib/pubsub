@@ -107,7 +107,7 @@ func (c *channel) Close() {
 
 func (c *channel) start() {
 	if err := recover(); err != nil {
-		log.Error("recovered from panic: %+v", err)
+		log.Errorf("recovered from panic: %+v", err)
 		debug.PrintStack()
 	}
 

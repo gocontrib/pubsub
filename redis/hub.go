@@ -53,7 +53,6 @@ func (h *hub) Publish(channels []string, msg interface{}) {
 	go func() {
 		var data, err = pubsub.Marshal(msg)
 		if err != nil {
-			log.Error("cannot publish as JSON %v", err)
 			return
 		}
 		for _, name := range channels {
@@ -75,7 +74,7 @@ func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
 
 	s := &sub{
 		channels: chans,
-		conn:     redis.PubSubConn{cn},
+		conn:     redis.PubSubConn{Conn: cn},
 		closed:   make(chan bool),
 		send:     make(chan interface{}),
 	}
@@ -116,7 +115,7 @@ func (s *sub) CloseNotify() <-chan bool {
 
 func (s *sub) start() {
 	if err := recover(); err != nil {
-		log.Error("recovered from panic: %+v", err)
+		log.Errorf("recovered from panic: %+v", err)
 		debug.PrintStack()
 	}
 

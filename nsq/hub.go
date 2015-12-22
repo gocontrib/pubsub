@@ -53,7 +53,6 @@ func (h *hub) Publish(channels []string, msg interface{}) {
 	go func() {
 		var body, err = pubsub.Marshal(msg)
 		if err != nil {
-			log.Error("cannot make JSON: %v", err)
 			return
 		}
 		for _, name := range channels {
@@ -88,14 +87,14 @@ func (h *hub) makeConsumer(topic string, handler nsq.Handler) (*nsq.Consumer, er
 
 	err = c.ConnectToNSQLookupd(h.lookupdAddr)
 	if err != nil {
-		log.Error("cannot connect to nsqlookupd at %s: %v", h.lookupdAddr, err)
+		log.Errorf("cannot connect to nsqlookupd at %s: %v", h.lookupdAddr, err)
 	} else {
 		return c, nil
 	}
 
 	err = c.ConnectToNSQD(h.nodeAddr)
 	if err != nil {
-		log.Error("cannot connect to nsqd at %s: %v", h.nodeAddr, err)
+		log.Errorf("cannot connect to nsqd at %s: %v", h.nodeAddr, err)
 		return nil, err
 	}
 

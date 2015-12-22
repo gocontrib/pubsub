@@ -18,7 +18,7 @@ func Marshal(value interface{}) ([]byte, error) {
 	enc := gob.NewEncoder(&b)
 	err := enc.Encode(&Box{value})
 	if err != nil {
-		log.Error("gob.Encode failed: %+v", err)
+		log.Errorf("gob.Encode failed: %+v", err)
 		return nil, err
 	}
 	return b.Bytes(), nil
@@ -31,7 +31,7 @@ func Unmarshal(data []byte) (interface{}, error) {
 	dec := gob.NewDecoder(b)
 	err := dec.Decode(&box)
 	if err != nil {
-		log.Error("gob.Decode failed: %+v", err)
+		log.Errorf("gob.Decode failed: %+v", err)
 		return nil, err
 	}
 	return box.Value, nil
