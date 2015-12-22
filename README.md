@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/gocontrib/pubsub.svg?branch=master)](https://travis-ci.org/gocontrib/pubsub)
+
 # pubsub
 Simple PubSub interface for golang apps with plugable drivers
 
