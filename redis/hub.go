@@ -133,7 +133,7 @@ func (s *sub) start() {
 				return
 			}
 		case error:
-			log.Error("%v", m)
+			log.Errorf("redis pubsub error: %+v", m)
 			return
 		}
 	}
