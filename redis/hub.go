@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	REDIS_URL = config.String("pubsub-redis", "")
+	redisURL = config.String("pubsub-redis", "")
 )
 
 func init() {
@@ -31,10 +31,10 @@ func (d *driver) Create() (pubsub.Hub, error) {
 }
 
 func openRedisConn() (redis.Conn, error) {
-	if len(*REDIS_URL) == 0 {
+	if len(*redisURL) == 0 {
 		return redisurl.Connect()
 	}
-	return redisurl.ConnectToURL(*REDIS_URL)
+	return redisurl.ConnectToURL(*redisURL)
 }
 
 // PubSub powered by redis

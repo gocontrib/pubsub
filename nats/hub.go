@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	NATS_URL = config.String("pubsub-nats", "")
+	natsURL = config.String("pubsub-nats", "")
 )
 
 func init() {
@@ -22,7 +22,7 @@ type driver struct{}
 func (d *driver) Create() (pubsub.Hub, error) {
 	log.Info("connecting to nats hub")
 
-	var url = *NATS_URL
+	var url = *natsURL
 	if len(url) == 0 {
 		url = nats.DefaultURL
 	}
