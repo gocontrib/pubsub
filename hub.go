@@ -7,6 +7,12 @@ import (
 	"github.com/gocontrib/log"
 )
 
+func newHub() Hub {
+	return &hub{
+		channels: make(map[string]*channel),
+	}
+}
+
 // Hub of pubsub channels.
 type hub struct {
 	sync.Mutex

@@ -73,9 +73,7 @@ func makeHub() Hub {
 	}
 
 	log.Info("use fallback internal pubsub")
-	return &hub{
-		channels: make(map[string]*channel),
-	}
+	return newHub()
 }
 
 // Init pubsub hub.
