@@ -28,7 +28,7 @@ type Channel interface {
 ```
 
 ## TODO
-* [ ] Continuous integration.
+* [x] Continuous integration.
 * [ ] Unit tests
 * [ ] Example for [Server-sent events](https://en.wikipedia.org/wiki/Server-sent_events)
 * [ ] Configuration agnostic removing dependency on "github.com/drone/config" module
