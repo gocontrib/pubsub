@@ -36,7 +36,7 @@ func Publish(channels []string, msg interface{}) error {
 }
 
 // Subscribe on given channels.
-func Subscribe(channels []string) (Receiver, error) {
+func Subscribe(channels []string) (Channel, error) {
 	if hubInstance == nil {
 		return nil, errorNohub
 	}

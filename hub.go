@@ -29,7 +29,7 @@ func (hub *hub) Publish(channels []string, msg interface{}) {
 }
 
 // Subscribe adds new receiver of events for given channel.
-func (hub *hub) Subscribe(channels []string) (Receiver, error) {
+func (hub *hub) Subscribe(channels []string) (Channel, error) {
 	var chans []*channel
 	for _, name := range channels {
 		chans = append(chans, hub.getChannel(name))
@@ -73,9 +73,9 @@ type channel struct {
 	name        string
 	closed      chan bool
 	broadcast   chan interface{}
-	subscribe   chan *receiver
-	unsubscribe chan *receiver
-	clients     map[*receiver]bool
+	subscribe   chan *sub
+	unsubscribe chan *sub
+	subs        map[*sub]bool
 }
 
 func makeChannel(hub *hub, name string) *channel {
@@ -84,9 +84,9 @@ func makeChannel(hub *hub, name string) *channel {
 		name:        name,
 		closed:      make(chan bool),
 		broadcast:   make(chan interface{}),
-		subscribe:   make(chan *receiver),
-		unsubscribe: make(chan *receiver),
-		clients:     make(map[*receiver]bool),
+		subscribe:   make(chan *sub),
+		unsubscribe: make(chan *sub),
+		subs:        make(map[*sub]bool),
 	}
 }
 
@@ -96,7 +96,7 @@ func (c *channel) Publish(data interface{}) {
 }
 
 // Subscribe adds new receiver.
-func (c *channel) Subscribe(r *receiver) {
+func (c *channel) Subscribe(r *sub) {
 	go func() { c.subscribe <- r }()
 }
 
@@ -115,14 +115,14 @@ func (c *channel) start() {
 		select {
 
 		case sub := <-c.subscribe:
-			c.clients[sub] = true
+			c.subs[sub] = true
 
 		case sub := <-c.unsubscribe:
-			delete(c.clients, sub)
+			delete(c.subs, sub)
 			close(sub.send)
 
 		case msg := <-c.broadcast:
-			for sub := range c.clients {
+			for sub := range c.subs {
 				sub.send <- msg
 			}
 
@@ -134,21 +134,21 @@ func (c *channel) start() {
 }
 
 func (c *channel) stop() {
-	for sub := range c.clients {
-		sub.Close()
+	for s := range c.subs {
+		s.Close()
 	}
 	c.hub.remove(c)
 }
 
-// Receiver of events.
-type receiver struct {
+// Subscription to multiple hub channels.
+type sub struct {
 	channels []*channel
 	closed   chan bool
 	send     chan interface{}
 }
 
-func makeSub(channels []*channel) *receiver {
-	return &receiver{
+func makeSub(channels []*channel) *sub {
+	return &sub{
 		channels: channels,
 		closed:   make(chan bool),
 		send:     make(chan interface{}),
@@ -156,22 +156,22 @@ func makeSub(channels []*channel) *receiver {
 }
 
 // Read returns channel of receiver events.
-func (sub *receiver) Read() <-chan interface{} {
-	return sub.send
+func (s *sub) Read() <-chan interface{} {
+	return s.send
 }
 
 // Close removes subscriber from channel.
-func (sub *receiver) Close() error {
+func (s *sub) Close() error {
 	go func() {
-		for _, ch := range sub.channels {
-			ch.unsubscribe <- sub
+		for _, ch := range s.channels {
+			ch.unsubscribe <- s
 		}
 	}()
-	go func() { sub.closed <- true }()
+	go func() { s.closed <- true }()
 	return nil
 }
 
 // CloseNotify returns channel to handle close event.
-func (sub *receiver) CloseNotify() <-chan bool {
-	return sub.closed
+func (s *sub) CloseNotify() <-chan bool {
+	return s.closed
 }

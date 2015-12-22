@@ -40,7 +40,7 @@ func (d *driver) Create() (pubsub.Hub, error) {
 type hub struct {
 	sync.Mutex
 	conn *nats.Conn
-	subs []*receiver
+	subs []*sub
 }
 
 func (h *hub) Publish(channels []string, msg interface{}) {
@@ -59,9 +59,9 @@ func (h *hub) Publish(channels []string, msg interface{}) {
 	}()
 }
 
-func (h *hub) Subscribe(channels []string) (pubsub.Receiver, error) {
+func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
 
-	var r = &receiver{
+	var r = &sub{
 		hub:         h,
 		send:        make(chan interface{}),
 		closeNotify: make(chan bool),
@@ -91,9 +91,9 @@ func (h *hub) Close() error {
 	return nil
 }
 
-func (h *hub) remove(r *receiver) bool {
+func (h *hub) remove(s *sub) bool {
 	for i, t := range h.subs {
-		if t == r {
+		if t == s {
 			h.Lock()
 			defer h.Unlock()
 			h.subs = append(h.subs[:i], h.subs[i+1:]...)
@@ -103,9 +103,8 @@ func (h *hub) remove(r *receiver) bool {
 	return false
 }
 
-// pubsub.Receiver impl
-
-type receiver struct {
+// Subscription channel.
+type sub struct {
 	sync.Mutex
 	hub         *hub
 	subs        []*nats.Subscription
@@ -114,42 +113,42 @@ type receiver struct {
 	closed      bool
 }
 
-func (r *receiver) Read() <-chan interface{} {
-	return r.send
+func (s *sub) Read() <-chan interface{} {
+	return s.send
 }
 
-func (r *receiver) Close() error {
+func (s *sub) Close() error {
 	go func() {
-		r.Lock()
-		defer r.Unlock()
+		s.Lock()
+		defer s.Unlock()
 
-		if r.closed {
+		if s.closed {
 			return
 		}
 
-		r.closed = true
-		r.hub.remove(r)
+		s.closed = true
+		s.hub.remove(s)
 
-		for _, s := range r.subs {
-			s.Unsubscribe()
+		for _, t := range s.subs {
+			t.Unsubscribe()
 		}
 
-		close(r.send)
-		r.closeNotify <- true
+		close(s.send)
+		s.closeNotify <- true
 	}()
 	return nil
 }
 
-func (r *receiver) CloseNotify() <-chan bool {
-	return r.closeNotify
+func (s *sub) CloseNotify() <-chan bool {
+	return s.closeNotify
 }
 
-func (r *receiver) Handler(msg *nats.Msg) {
+func (s *sub) Handler(msg *nats.Msg) {
 	go func() {
 		v, err := pubsub.Unmarshal(msg.Data)
 		if err != nil {
 			return
 		}
-		r.send <- v
+		s.send <- v
 	}()
 }

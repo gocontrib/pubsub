@@ -3,12 +3,12 @@ package pubsub
 // Hub interface of pubsub system.
 type Hub interface {
 	Publish(channels []string, msg interface{})
-	Subscribe(channels []string) (Receiver, error)
+	Subscribe(channels []string) (Channel, error)
 	Close() error
 }
 
-// Receiver of pubsub events.
-type Receiver interface {
+// Channel to listen pubsub events.
+type Channel interface {
 	Read() <-chan interface{}
 	Close() error
 	CloseNotify() <-chan bool

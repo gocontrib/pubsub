@@ -62,19 +62,19 @@ func (h *hub) Publish(channels []string, msg interface{}) {
 	}()
 }
 
-func (h *hub) Subscribe(channels []string) (pubsub.Receiver, error) {
-	var r = &receiver{
+func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
+	s := &sub{
 		closed: make(chan bool),
 		send:   make(chan interface{}),
 	}
 	for _, name := range channels {
-		var c, err = h.makeConsumer(escapeChannelName(name), r)
+		var c, err = h.makeConsumer(escapeChannelName(name), s)
 		if err != nil {
 			return nil, err
 		}
-		r.consumers = append(r.consumers, c)
+		s.consumers = append(s.consumers, c)
 	}
-	return r, nil
+	return s, nil
 }
 
 func (h *hub) makeConsumer(topic string, handler nsq.Handler) (*nsq.Consumer, error) {
@@ -107,40 +107,40 @@ func (h *hub) Close() error {
 	return nil
 }
 
-// NSQ receiver
-type receiver struct {
+// Subscription channel.
+type sub struct {
 	consumers []*nsq.Consumer
 	closed    chan bool
 	send      chan interface{}
 }
 
-func (r *receiver) Read() <-chan interface{} {
-	return r.send
+func (s *sub) Read() <-chan interface{} {
+	return s.send
 }
 
-func (r *receiver) Close() error {
+func (s *sub) Close() error {
 	go func() {
-		r.closed <- true
+		s.closed <- true
 	}()
 	go func() {
-		for _, c := range r.consumers {
+		for _, c := range s.consumers {
 			c.Stop()
 		}
 	}()
 	return nil
 }
 
-func (r *receiver) CloseNotify() <-chan bool {
-	return r.closed
+func (s *sub) CloseNotify() <-chan bool {
+	return s.closed
 }
 
-func (r *receiver) HandleMessage(msg *nsq.Message) error {
+func (s *sub) HandleMessage(msg *nsq.Message) error {
 	go func() {
 		v, err := pubsub.Unmarshal(msg.Body)
 		if err != nil {
 			return
 		}
-		r.send <- v
+		s.send <- v
 	}()
 	return nil
 }
