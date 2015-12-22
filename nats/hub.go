@@ -21,7 +21,11 @@ type driver struct{}
 
 func (d *driver) Create() (pubsub.Hub, error) {
 	log.Info("connecting to nats hub")
+	return Open()
+}
 
+// Open creates pubsub hub connected to nats server.
+func Open() (pubsub.Hub, error) {
 	var url = *natsURL
 	if len(url) == 0 {
 		url = nats.DefaultURL
@@ -32,7 +36,10 @@ func (d *driver) Create() (pubsub.Hub, error) {
 		return nil, err
 	}
 
-	return &hub{conn: conn}, nil
+	return &hub{
+		conn: conn,
+		subs: make(map[*sub]struct{}),
+	}, nil
 }
 
 // pubsub.Hub impl
@@ -40,7 +47,7 @@ func (d *driver) Create() (pubsub.Hub, error) {
 type hub struct {
 	sync.Mutex
 	conn *nats.Conn
-	subs []*sub
+	subs map[*sub]struct{}
 }
 
 func (h *hub) Publish(channels []string, msg interface{}) {
@@ -60,56 +67,54 @@ func (h *hub) Publish(channels []string, msg interface{}) {
 
 func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
 
-	var r = &sub{
-		hub:         h,
-		send:        make(chan interface{}),
-		closeNotify: make(chan bool),
+	s := &sub{
+		hub:    h,
+		send:   make(chan interface{}),
+		closed: make(chan bool),
 	}
 
 	for _, subject := range channels {
-		sub, err := h.conn.Subscribe(subject, r.Handler)
+		sub, err := h.conn.Subscribe(subject, s.Handler)
 		if err != nil {
-			r.Close()
+			s.Close()
 			return nil, err
 		}
-		r.subs = append(r.subs, sub)
+		s.subs = append(s.subs, sub)
 	}
 
 	h.Lock()
 	defer h.Unlock()
-	h.subs = append(h.subs, r)
+	h.subs[s] = struct{}{}
 
-	return r, nil
+	return s, nil
 }
 
 func (h *hub) Close() error {
-	for _, r := range h.subs {
-		r.Close()
+	for s := range h.subs {
+		s.Close()
 	}
 	h.conn.Close()
 	return nil
 }
 
 func (h *hub) remove(s *sub) bool {
-	for i, t := range h.subs {
-		if t == s {
-			h.Lock()
-			defer h.Unlock()
-			h.subs = append(h.subs[:i], h.subs[i+1:]...)
-			return true
-		}
+	_, ok := h.subs[s]
+	if !ok {
+		return false
 	}
-	return false
+	h.Lock()
+	defer h.Unlock()
+	delete(h.subs, s)
+	return true
 }
 
 // Subscription channel.
 type sub struct {
 	sync.Mutex
-	hub         *hub
-	subs        []*nats.Subscription
-	send        chan interface{}
-	closeNotify chan bool
-	closed      bool
+	hub    *hub
+	subs   []*nats.Subscription
+	send   chan interface{}
+	closed chan bool
 }
 
 func (s *sub) Read() <-chan interface{} {
@@ -121,25 +126,25 @@ func (s *sub) Close() error {
 		s.Lock()
 		defer s.Unlock()
 
-		if s.closed {
+		if s.hub == nil {
 			return
 		}
 
-		s.closed = true
 		s.hub.remove(s)
+		s.hub = nil
 
 		for _, t := range s.subs {
 			t.Unsubscribe()
 		}
 
+		s.closed <- true
 		close(s.send)
-		s.closeNotify <- true
 	}()
 	return nil
 }
 
 func (s *sub) CloseNotify() <-chan bool {
-	return s.closeNotify
+	return s.closed
 }
 
 func (s *sub) Handler(msg *nats.Msg) {

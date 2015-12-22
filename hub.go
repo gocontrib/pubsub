@@ -7,7 +7,8 @@ import (
 	"github.com/gocontrib/log"
 )
 
-func newHub() Hub {
+// NewHub creates new in-process pubsub hub.
+func NewHub() Hub {
 	return &hub{
 		channels: make(map[string]*channel),
 	}
@@ -20,8 +21,8 @@ type hub struct {
 }
 
 func (hub *hub) Close() error {
-	for _, cn := range hub.channels {
-		cn.Close()
+	for _, c := range hub.channels {
+		c.Close()
 	}
 	return nil
 }
@@ -81,7 +82,7 @@ type channel struct {
 	broadcast   chan interface{}
 	subscribe   chan *sub
 	unsubscribe chan *sub
-	subs        map[*sub]bool
+	subs        map[*sub]struct{}
 }
 
 func makeChannel(hub *hub, name string) *channel {
@@ -92,7 +93,7 @@ func makeChannel(hub *hub, name string) *channel {
 		broadcast:   make(chan interface{}),
 		subscribe:   make(chan *sub),
 		unsubscribe: make(chan *sub),
-		subs:        make(map[*sub]bool),
+		subs:        make(map[*sub]struct{}),
 	}
 }
 
@@ -121,7 +122,7 @@ func (c *channel) start() {
 		select {
 
 		case sub := <-c.subscribe:
-			c.subs[sub] = true
+			c.subs[sub] = struct{}{}
 
 		case sub := <-c.unsubscribe:
 			delete(c.subs, sub)
@@ -169,11 +170,14 @@ func (s *sub) Read() <-chan interface{} {
 // Close removes subscriber from channel.
 func (s *sub) Close() error {
 	go func() {
-		for _, ch := range s.channels {
-			ch.unsubscribe <- s
+		for _, c := range s.channels {
+			c.unsubscribe <- s
 		}
 	}()
-	go func() { s.closed <- true }()
+	go func() {
+		s.closed <- true
+		close(s.send)
+	}()
 	return nil
 }
 

@@ -73,7 +73,7 @@ func makeHub() Hub {
 	}
 
 	log.Info("use fallback internal pubsub")
-	return newHub()
+	return NewHub()
 }
 
 // Init pubsub hub.

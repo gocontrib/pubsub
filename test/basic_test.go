@@ -1,8 +1,11 @@
-package pubsub
+package test
 
 import (
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/gocontrib/pubsub"
 )
 
 func OK(t *testing.T, op string, err error) {
@@ -21,8 +24,8 @@ func MustReceive(t *testing.T, event <-chan bool) {
 	}
 }
 
-func VerifyBasicAPI(t *testing.T, h Hub) {
-	s, err := h.Subscribe([]string{"test"})
+func VerifyBasicAPI(t *testing.T, hub pubsub.Hub) {
+	s, err := hub.Subscribe([]string{"test"})
 	OK(t, "Subscribe", err)
 
 	var msg interface{}
@@ -33,24 +36,26 @@ func VerifyBasicAPI(t *testing.T, h Hub) {
 		for {
 			select {
 			case m := <-s.Read():
+				fmt.Println("msg received")
 				msg = m
 				msgReceived <- true
 			case <-s.CloseNotify():
+				fmt.Println("close received")
 				closeReceived <- true
 				return
 			}
 		}
 	}()
 
-	h.Publish([]string{"test"}, "test")
+	hub.Publish([]string{"test"}, "test")
 
 	MustReceive(t, msgReceived)
 
-	h.Close()
+	hub.Close()
 
 	MustReceive(t, closeReceived)
 }
 
-func TestBasic(t *testing.T) {
-	VerifyBasicAPI(t, newHub())
+func TestHub_Basic(t *testing.T) {
+	VerifyBasicAPI(t, pubsub.NewHub())
 }

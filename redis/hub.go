@@ -1,7 +1,9 @@
 package redis
 
 import (
+	"os"
 	"runtime/debug"
+	"sync"
 
 	"github.com/drone/config"
 	"github.com/garyburd/redigo/redis"
@@ -22,27 +24,45 @@ type driver struct{}
 
 func (d *driver) Create() (pubsub.Hub, error) {
 	log.Info("connecting to redis pubsub")
-	var conn, err = openRedisConn()
-	if err != nil {
-		return nil, err
-
-	}
-	return &hub{conn}, nil
+	return Open()
 }
 
-func openRedisConn() (redis.Conn, error) {
-	if len(*redisURL) == 0 {
-		return redisurl.Connect()
+// Open creates pubsub hub connected to redis server.
+func Open(URL ...string) (pubsub.Hub, error) {
+	redisURL := getRedisURL(URL...)
+	conn, err := redisurl.ConnectToURL(redisURL)
+	if err != nil {
+		return nil, err
 	}
-	return redisurl.ConnectToURL(*redisURL)
+	return &hub{
+		conn:     conn,
+		redisURL: redisURL,
+		subs:     make(map[*sub]struct{}),
+	}, nil
+}
+
+func getRedisURL(URL ...string) string {
+	if len(URL) == 1 && len(URL[0]) > 0 {
+		return URL[0]
+	}
+	if len(*redisURL) == 0 {
+		return os.Getenv("REDIS_URL")
+	}
+	return *redisURL
 }
 
 // PubSub powered by redis
 type hub struct {
-	conn redis.Conn
+	sync.Mutex
+	conn     redis.Conn
+	redisURL string
+	subs     map[*sub]struct{}
 }
 
 func (h *hub) Close() error {
+	for s := range h.subs {
+		s.Close()
+	}
 	return h.conn.Close()
 }
 
@@ -62,7 +82,7 @@ func (h *hub) Publish(channels []string, msg interface{}) {
 }
 
 func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
-	var cn, err = openRedisConn()
+	cn, err := redisurl.ConnectToURL(h.redisURL)
 	if err != nil {
 		return nil, err
 	}
@@ -72,18 +92,37 @@ func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
 		chans = append(chans, name)
 	}
 
+	h.Lock()
+	defer h.Unlock()
+
 	s := &sub{
+		hub:      h,
 		channels: chans,
 		conn:     redis.PubSubConn{Conn: cn},
 		closed:   make(chan bool),
 		send:     make(chan interface{}),
 	}
+	h.subs[s] = struct{}{}
+
 	go s.start()
 	return s, nil
 }
 
+func (h *hub) remove(s *sub) bool {
+	_, ok := h.subs[s]
+	if !ok {
+		return false
+	}
+	h.Lock()
+	defer h.Unlock()
+	delete(h.subs, s)
+	return true
+}
+
 // Subscription channel.
 type sub struct {
+	sync.Mutex
+	hub      *hub
 	channels []interface{}
 	conn     redis.PubSubConn
 	closed   chan bool
@@ -98,12 +137,23 @@ func (s *sub) Read() <-chan interface{} {
 // Close removes subscriber from channel.
 func (s *sub) Close() error {
 	go func() {
+		s.Lock()
+		defer s.Unlock()
+
+		if s.hub == nil {
+			return
+		}
+
+		s.hub.remove(s)
+		s.hub = nil
+
 		s.conn.Unsubscribe(s.channels...)
 
 		// TODO safe stop of start goroutine
 		s.conn.Close()
-		close(s.send)
+
 		s.closed <- true
+		close(s.send)
 	}()
 	return nil
 }
