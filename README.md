@@ -3,7 +3,7 @@ Simple PubSub interface for golang apps with plugable drivers
 
 ## API
 
-```golang
+```go
 // Hub interface of pubsub system.
 type Hub interface {
 	// Publish sends input message to specified channels.
