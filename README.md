@@ -1,7 +1,13 @@
 [![Build Status](https://travis-ci.org/gocontrib/pubsub.svg?branch=master)](https://travis-ci.org/gocontrib/pubsub)
 
 # pubsub
-Simple PubSub interface for golang apps with plugable drivers
+Simple PubSub interface for golang apps with plugable drivers.
+
+## Supported drivers
+* in-process implementation based on go channels
+* [nats.io](http://nats.io/)
+* redis using [redigo](https://github.com/garyburd/redigo)
+* [nsq.io](http://nsq.io/) - draft, not completed!
 
 ## API
 
