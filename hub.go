@@ -18,6 +18,8 @@ type hub struct {
 }
 
 func (hub *hub) Close() error {
+	hub.Lock()
+	defer hub.Unlock()
 	for _, c := range hub.channels {
 		c.Close()
 	}
@@ -47,12 +49,12 @@ func (hub *hub) Subscribe(channels []string) (Channel, error) {
 
 // GetChannel gets or creates new pubsub channel.
 func (hub *hub) getChannel(name string) *channel {
+	hub.Lock()
+	defer hub.Unlock()
 	cn, ok := hub.channels[name]
 	if ok {
 		return cn
 	}
-	hub.Lock()
-	defer hub.Unlock()
 	cn = makeChannel(hub, name)
 	hub.channels[name] = cn
 	go cn.start()
@@ -61,12 +63,12 @@ func (hub *hub) getChannel(name string) *channel {
 
 // Removes given channel, called by Channel.Close.
 func (hub *hub) remove(cn *channel) {
+	hub.Lock()
+	defer hub.Unlock()
 	cn, ok := hub.channels[cn.name]
 	if !ok {
 		return
 	}
-	hub.Lock()
-	defer hub.Unlock()
 	delete(hub.channels, cn.name)
 	return
 }
