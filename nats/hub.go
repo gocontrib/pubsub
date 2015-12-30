@@ -54,8 +54,18 @@ func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
 	return s, nil
 }
 
-func (h *hub) Close() error {
+func (h *hub) subArray() []*sub {
+	h.Lock()
+	defer h.Unlock()
+	subs := make([]*sub, len(h.subs))
 	for s := range h.subs {
+		subs = append(subs, s)
+	}
+	return subs
+}
+
+func (h *hub) Close() error {
+	for _, s := range h.subArray() {
 		s.Close()
 	}
 	h.conn.Close()

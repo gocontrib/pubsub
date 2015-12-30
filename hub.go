@@ -20,8 +20,18 @@ type hub struct {
 	channels map[string]*channel
 }
 
-func (hub *hub) Close() error {
+func (hub *hub) chans() []*channel {
+	hub.Lock()
+	defer hub.Unlock()
+	a := make([]*channel, len(hub.channels))
 	for _, c := range hub.channels {
+		a = append(a, c)
+	}
+	return a
+}
+
+func (hub *hub) Close() error {
+	for _, c := range hub.chans() {
 		c.Close()
 	}
 	return nil
