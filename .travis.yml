@@ -9,11 +9,27 @@ os:
 go:
   - 1.5
 
-before_script:
-  - sudo redis-server /etc/redis/redis.conf --port 6381
-
 env:
-  - REDIS_URL=tcp://127.0.0.1:6381/11
+  global:
+    - REDIS_TAG=2.8.22
+    - ALL_REDIS_TAGS="2.8.22"
+    - REDIS_URL=tcp://127.0.0.1:6381/11
+
+cache:
+  directories:
+  - $HOME/redis
+
+before_install:
+- export REDIS_BIN=$HOME/redis/${REDIS_TAG}/bin
+- >
+  if [ ! -x "$REDIS_BIN/redis-server" ]; then
+    # get and build redis versions
+    for TAG in ${ALL_REDIS_TAGS}; do
+      wget -c https://github.com/antirez/redis/archive/${TAG}.tar.gz -O redis-${TAG}.tar.gz
+      tar -xvf redis-${TAG}.tar.gz
+      make -C redis-${TAG} PREFIX=$HOME/redis/${TAG} install
+    done;
+  fi
 
 install:
   - go get -t ./...
@@ -21,6 +37,9 @@ install:
   - go get -u golang.org/x/tools/cmd/goimports
   - go get -u github.com/nats-io/gnatsd/...
   - go get -u github.com/nsqio/nsq/...
+
+before_script:
+  - $REDIS_BIN/redis-server --daemonize yes --port 6381
 
 script:
   - gnatsd -DV &
