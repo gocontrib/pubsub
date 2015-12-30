@@ -12,6 +12,9 @@ go:
 services:
   - redis-server
 
+env:
+  - REDIS_URL=tcp://127.0.0.1:6379/11
+
 install:
   - go get -t ./...
   - go get -u github.com/golang/lint/golint
