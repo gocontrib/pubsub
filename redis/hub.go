@@ -17,6 +17,8 @@ type hub struct {
 }
 
 func (h *hub) Close() error {
+	h.Lock()
+	defer h.Unlock()
 	for s := range h.subs {
 		s.Close()
 	}
@@ -66,12 +68,12 @@ func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
 }
 
 func (h *hub) remove(s *sub) bool {
+	h.Lock()
+	defer h.Unlock()
 	_, ok := h.subs[s]
 	if !ok {
 		return false
 	}
-	h.Lock()
-	defer h.Unlock()
 	delete(h.subs, s)
 	return true
 }

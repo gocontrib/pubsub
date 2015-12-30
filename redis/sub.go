@@ -36,13 +36,13 @@ func (s *sub) Close() error {
 
 		s.hub.remove(s)
 		s.hub = nil
+		s.closed <- true
 
 		s.conn.Unsubscribe(s.channels...)
 
 		// TODO safe stop of start goroutine
 		s.conn.Close()
 
-		s.closed <- true
 		close(s.send)
 	}()
 	return nil
@@ -73,7 +73,6 @@ func (s *sub) start() {
 				return
 			}
 		case error:
-			log.Errorf("redis pubsub error: %+v", m)
 			return
 		}
 	}
