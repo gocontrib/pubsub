@@ -9,11 +9,11 @@ os:
 go:
   - 1.5
 
-services:
-  - redis-server
+before_script:
+  - sudo redis-server /etc/redis/redis.conf --port 6381
 
 env:
-  - REDIS_URL=tcp://127.0.0.1:6379/11
+  - REDIS_URL=tcp://127.0.0.1:6381/11
 
 install:
   - go get -t ./...
