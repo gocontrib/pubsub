@@ -4,12 +4,10 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/drone/config"
 	"github.com/gocontrib/log"
 )
 
 var (
-	driverList  = config.String("pubsub-drivers", "nats,redis")
 	errorNohub  = errors.New("no pubsub engine")
 	hubInstance Hub
 )
@@ -52,18 +50,17 @@ func Subscribe(channels []string) (Channel, error) {
 // IMPLEMENTATION
 
 // returns new instance of the pubsub hub.
-func makeHub() Hub {
+func makeHub(driverList ...HubConfig) Hub {
 	log.Info("starting pubsub")
 
-	var chain = strings.Split(*driverList, ",")
-	for _, t := range chain {
-		name := strings.ToLower(strings.TrimSpace(t))
+	for _, config := range driverList {
+		name := strings.ToLower(strings.TrimSpace(config.GetString("name", "")))
 		if len(name) == 0 {
 			continue
 		}
 		d, ok := drivers[name]
 		if ok {
-			h, err := d.Create()
+			h, err := d.Create(config)
 			if err != nil {
 				log.Errorf("unable to connect to %s pubsub server: %+v", name, err)
 			}
@@ -77,7 +74,7 @@ func makeHub() Hub {
 }
 
 // Init pubsub hub.
-func Init() {
+func Init(driverList ...HubConfig) {
 	log.Info("init pubsub module")
 	hubInstance = makeHub()
 }

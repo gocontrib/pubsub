@@ -156,9 +156,10 @@ func SendEvents(w http.ResponseWriter, r *http.Request, channels []string) {
 ```
 
 ## TODO
-* [x] Continuous integration
-* [ ] Unit tests
-* [x] Example for [Server-sent events](https://en.wikipedia.org/wiki/Server-sent_events)
-* [ ] Example for websocket event streams
-* [ ] Configuration agnostic removing dependency on "github.com/drone/config" module
-* [ ] Get working nsq driver
+* [x] continuous integration
+* [ ] (in progress) unit tests
+* [x] example for [Server-sent events](https://en.wikipedia.org/wiki/Server-sent_events)
+* [ ] example for websocket event streams
+* [x] remove dependency on "github.com/drone/config" module
+* [ ] get working nsq driver
+* [ ] find and implement more drivers maybe faster then nats.io

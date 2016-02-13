@@ -3,14 +3,9 @@ package redis
 import (
 	"os"
 
-	"github.com/drone/config"
 	"github.com/gocontrib/log"
 	"github.com/gocontrib/pubsub"
 	"github.com/soveran/redisurl"
-)
-
-var (
-	redisURL = config.String("pubsub-redis", "")
 )
 
 func init() {
@@ -19,9 +14,9 @@ func init() {
 
 type driver struct{}
 
-func (d *driver) Create() (pubsub.Hub, error) {
+func (d *driver) Create(config pubsub.HubConfig) (pubsub.Hub, error) {
 	log.Info("connecting to redis pubsub")
-	return Open()
+	return Open(config.GetString("url", ""))
 }
 
 // Open creates pubsub hub connected to redis server.
@@ -42,8 +37,5 @@ func getRedisURL(URL ...string) string {
 	if len(URL) == 1 && len(URL[0]) > 0 {
 		return URL[0]
 	}
-	if len(*redisURL) == 0 {
-		return os.Getenv("REDIS_URL")
-	}
-	return *redisURL
+	return os.Getenv("REDIS_URL")
 }

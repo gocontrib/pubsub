@@ -1,14 +1,9 @@
 package nats
 
 import (
-	"github.com/drone/config"
 	"github.com/gocontrib/log"
 	"github.com/gocontrib/pubsub"
 	"github.com/nats-io/nats"
-)
-
-var (
-	natsURL = config.String("pubsub-nats", "")
 )
 
 func init() {
@@ -17,19 +12,22 @@ func init() {
 
 type driver struct{}
 
-func (d *driver) Create() (pubsub.Hub, error) {
+func (d *driver) Create(config pubsub.HubConfig) (pubsub.Hub, error) {
 	log.Info("connecting to nats hub")
-	return Open()
+	url, ok := config["url"].(string)
+	if ok {
+		return Open(url)
+	}
+	return Open("")
 }
 
 // Open creates pubsub hub connected to nats server.
-func Open() (pubsub.Hub, error) {
-	var url = *natsURL
-	if len(url) == 0 {
-		url = nats.DefaultURL
+func Open(URL ...string) (pubsub.Hub, error) {
+	if len(URL) == 0 {
+		URL = []string{nats.DefaultURL}
 	}
 
-	conn, err := nats.Connect(url)
+	conn, err := nats.Connect(URL[0])
 	if err != nil {
 		return nil, err
 	}
