@@ -13,7 +13,7 @@ type nsqConfig {
 }
 
 // TODO allow multiple addresses
-func (c nsqConfig) addr() {
+func (c nsqConfig) addr() string {
 	return c.config.GetString("nsqd", "127.0.0.1:4150")
 }
 
