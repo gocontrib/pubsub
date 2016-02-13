@@ -163,3 +163,7 @@ func SendEvents(w http.ResponseWriter, r *http.Request, channels []string) {
 * [x] remove dependency on "github.com/drone/config" module
 * [ ] get working nsq driver
 * [ ] find and implement more drivers maybe faster then nats.io
+  * [ ] [sarama](https://github.com/Shopify/sarama) client for [Apache Kafka](https://kafka.apache.org/)
+  * [ ] [zmq4](https://github.com/pebbe/zmq4) client for [zeromq](http://zeromq.org/)
+
+
