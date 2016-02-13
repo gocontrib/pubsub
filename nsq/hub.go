@@ -10,9 +10,8 @@ import (
 
 // NSQ pubsub hub
 type hub struct {
-	nodeAddr    string
-	lookupdAddr string
-	producer    *nsq.Producer
+	config   nsqConfig
+	producer *nsq.Producer
 }
 
 func (h *hub) Publish(channels []string, msg interface{}) {
@@ -44,23 +43,25 @@ func (h *hub) Subscribe(channels []string) (pubsub.Channel, error) {
 
 func (h *hub) makeConsumer(topic string, handler nsq.Handler) (*nsq.Consumer, error) {
 	// TODO fix channel name
-	var c, err = nsq.NewConsumer(topic, "hub", nsqConfig())
+	var c, err = nsq.NewConsumer(topic, "hub", makeConfig(h.config))
 	if err != nil {
 		return nil, err
 	}
 
 	c.AddHandler(handler)
 
-	err = c.ConnectToNSQLookupd(h.lookupdAddr)
+	lookupdAddr := h.config.lookupdAddr()
+	err = c.ConnectToNSQLookupd(lookupdAddr)
 	if err != nil {
-		log.Errorf("cannot connect to nsqlookupd at %s: %v", h.lookupdAddr, err)
+		log.Errorf("cannot connect to nsqlookupd at %s: %v", lookupdAddr, err)
 	} else {
 		return c, nil
 	}
 
-	err = c.ConnectToNSQD(h.nodeAddr)
+	nodeAddr := h.config.nodeAddr()
+	err = c.ConnectToNSQD(nodeAddr)
 	if err != nil {
-		log.Errorf("cannot connect to nsqd at %s: %v", h.nodeAddr, err)
+		log.Errorf("cannot connect to nsqd at %s: %v", nodeAddr, err)
 		return nil, err
 	}
 
