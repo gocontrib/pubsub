@@ -76,5 +76,5 @@ func makeHub(driverList ...HubConfig) Hub {
 // Init pubsub hub.
 func Init(driverList ...HubConfig) {
 	log.Info("init pubsub module")
-	hubInstance = makeHub()
+	hubInstance = makeHub(driverList...)
 }
