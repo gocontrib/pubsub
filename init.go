@@ -54,7 +54,7 @@ func makeHub(driverList ...HubConfig) Hub {
 	log.Info("starting pubsub")
 
 	for _, config := range driverList {
-		name := strings.ToLower(strings.TrimSpace(config.GetString("name", "")))
+		name := getDriverName(config)
 		if len(name) == 0 {
 			continue
 		}
@@ -71,6 +71,14 @@ func makeHub(driverList ...HubConfig) Hub {
 
 	log.Info("use fallback internal pubsub")
 	return NewHub()
+}
+
+func getDriverName(config HubConfig) string {
+	val := strings.ToLower(strings.TrimSpace(config.GetString("driver", "")))
+	if len(val) > 0 {
+		return val
+	}
+	return strings.ToLower(strings.TrimSpace(config.GetString("name", "")))
 }
 
 // Init pubsub hub.

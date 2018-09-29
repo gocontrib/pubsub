@@ -27,7 +27,8 @@ func main() {
 
 	start := func() {
 		pubsub.Init(pubsub.HubConfig{
-			"url": nats,
+			"driver": "nats",
+			"url":    nats,
 		})
 		startServer(addr)
 	}
