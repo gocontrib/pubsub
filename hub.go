@@ -2,10 +2,13 @@ package pubsub
 
 import (
 	"sync"
+
+	"github.com/gocontrib/log"
 )
 
 // NewHub creates new in-process pubsub hub.
 func NewHub() Hub {
+	log.Info("use in-memory hub")
 	return &hub{
 		channels: make(map[string]*channel),
 	}

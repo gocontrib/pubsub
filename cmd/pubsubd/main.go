@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gocontrib/pubsub"
+	_ "github.com/gocontrib/pubsub/nats"
+	_ "github.com/gocontrib/pubsub/redis"
 	"github.com/gocontrib/pubsub/sse"
 )
 
@@ -25,11 +28,10 @@ func main() {
 	addr := opt("PUBSUBD_ADDR", ":4302")
 	nats := opt("NATS_URI", "nats:4222")
 
+	fmt.Printf("starting pubsub --addr %s --nats %s", addr, nats)
+
 	start := func() {
-		pubsub.Init(pubsub.HubConfig{
-			"driver": "nats",
-			"url":    nats,
-		})
+		initHub(nats)
 		startServer(addr)
 	}
 
@@ -50,6 +52,20 @@ func main() {
 	<-die
 
 	stop()
+}
+
+func initHub(nats string) {
+	for attemt := 0; attemt < 100; attemt = attemt + 1 {
+		err := pubsub.Init(pubsub.HubConfig{
+			"driver": "nats",
+			"url":    nats,
+		})
+		if err == nil {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	log.Fatalf("cannot initialize hub")
 }
 
 var server *http.Server

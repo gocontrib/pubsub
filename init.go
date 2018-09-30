@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/gocontrib/log"
@@ -49,28 +50,28 @@ func Subscribe(channels []string) (Channel, error) {
 
 // IMPLEMENTATION
 
-// returns new instance of the pubsub hub.
-func makeHub(driverList ...HubConfig) Hub {
-	log.Info("starting pubsub")
-
-	for _, config := range driverList {
-		name := getDriverName(config)
-		if len(name) == 0 {
-			continue
-		}
-		d, ok := drivers[name]
-		if ok {
-			h, err := d.Create(config)
-			if err != nil {
-				log.Errorf("unable to connect to %s pubsub server: %+v", name, err)
-			}
-			log.Info("connected to %s pubsub", name)
-			return h
-		}
+// MakeHub returns new instance of the pubsub hub.
+func MakeHub(config HubConfig) (Hub, error) {
+	if config == nil {
+		return NewHub(), nil
 	}
 
-	log.Info("use fallback internal pubsub")
-	return NewHub()
+	driverName := getDriverName(config)
+	if len(driverName) == 0 {
+		return nil, fmt.Errorf("driver name is not specified")
+	}
+	d, ok := drivers[driverName]
+	if ok {
+		h, err := d.Create(config)
+		if err != nil {
+			log.Errorf("unable to connect to %s pubsub server: %+v", driverName, err)
+			return nil, err
+		}
+		log.Info("connected to %s pubsub", driverName)
+		return h, nil
+	}
+
+	return nil, fmt.Errorf("unknown driver: %s", driverName)
 }
 
 func getDriverName(config HubConfig) string {
@@ -81,8 +82,12 @@ func getDriverName(config HubConfig) string {
 	return strings.ToLower(strings.TrimSpace(config.GetString("name", "")))
 }
 
-// Init pubsub hub.
-func Init(driverList ...HubConfig) {
-	log.Info("init pubsub module")
-	hubInstance = makeHub(driverList...)
+// Init pubsub hub
+func Init(config HubConfig) error {
+	h, err := MakeHub(config)
+	if err != nil {
+		return err
+	}
+	hubInstance = h
+	return nil
 }
