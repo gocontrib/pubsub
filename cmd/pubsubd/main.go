@@ -55,7 +55,7 @@ func main() {
 }
 
 func initHub(nats string) {
-	for attemt := 0; attemt < 100; attemt = attemt + 1 {
+	for attemt := 0; attemt < 30; attemt = attemt + 1 {
 		err := pubsub.Init(pubsub.HubConfig{
 			"driver": "nats",
 			"url":    nats,
@@ -63,7 +63,7 @@ func initHub(nats string) {
 		if err == nil {
 			break
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 	}
 	log.Fatalf("cannot initialize hub")
 }

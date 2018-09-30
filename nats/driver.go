@@ -13,7 +13,7 @@ func init() {
 type driver struct{}
 
 func (d *driver) Create(config pubsub.HubConfig) (pubsub.Hub, error) {
-	log.Info("connecting to nats hub")
+
 	url, ok := config["url"].(string)
 	if ok {
 		return Open(url)
@@ -26,6 +26,8 @@ func Open(URL ...string) (pubsub.Hub, error) {
 	if len(URL) == 0 {
 		URL = []string{nats.DefaultURL}
 	}
+
+	log.Info("connecting to nats hub: %v", URL)
 
 	conn, err := nats.Connect(URL[0])
 	if err != nil {
