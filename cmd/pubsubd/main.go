@@ -61,7 +61,7 @@ func initHub(nats string) {
 			"url":    nats,
 		})
 		if err == nil {
-			break
+			return
 		}
 		time.Sleep(1 * time.Second)
 	}
