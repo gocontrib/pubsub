@@ -1,38 +1,23 @@
 package pubsub
 
 import (
-	"bytes"
-	"encoding/gob"
+	"encoding/json"
 
 	"github.com/gocontrib/log"
 )
 
-// Box of any value.
-type Box struct {
-	Value interface{}
-}
-
 // Marshal message to byte array.
 func Marshal(value interface{}) ([]byte, error) {
-	var b bytes.Buffer
-	enc := gob.NewEncoder(&b)
-	err := enc.Encode(&Box{value})
-	if err != nil {
-		log.Errorf("gob.Encode failed: %+v", err)
-		return nil, err
-	}
-	return b.Bytes(), nil
+	return json.Marshal(value)
 }
 
 // Unmarshal message from byte array.
 func Unmarshal(data []byte) (interface{}, error) {
-	var box Box
-	var b = bytes.NewBuffer(data)
-	dec := gob.NewDecoder(b)
-	err := dec.Decode(&box)
+	var msg map[string]interface{}
+	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		log.Errorf("gob.Decode failed: %+v", err)
+		log.Errorf("json.Unmarshal failed: %+v", err)
 		return nil, err
 	}
-	return box.Value, nil
+	return msg, nil
 }
