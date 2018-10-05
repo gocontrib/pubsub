@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/gocontrib/pubsub"
 	_ "github.com/gocontrib/pubsub/nats"
 	_ "github.com/gocontrib/pubsub/redis"
@@ -90,6 +91,18 @@ func makeHandler() http.Handler {
 	mux.Use(middleware.RequestID)
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
+
+	// Basic CORS
+	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	})
+	r.Use(cors.Handler)
 
 	mux.Group(func(r chi.Router) {
 		// TODO configurable api path
