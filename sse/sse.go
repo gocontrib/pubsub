@@ -48,7 +48,7 @@ func SendEvents(w http.ResponseWriter, r *http.Request, channels []string) {
 
 	// set the headers related to event streaming
 	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Cache-Control", "no-transform")
 	w.Header().Set("Connection", "keep-alive")
 
 	// channel to send data to client
