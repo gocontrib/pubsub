@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gocontrib/log"
 )
@@ -82,12 +83,22 @@ func getDriverName(config HubConfig) string {
 	return strings.ToLower(strings.TrimSpace(config.GetString("name", "")))
 }
 
-// Init pubsub hub
-func Init(config HubConfig) error {
+func initOne(config HubConfig) error {
 	h, err := MakeHub(config)
 	if err != nil {
 		return err
 	}
 	hubInstance = h
 	return nil
+}
+
+func Init(config HubConfig) (err error) {
+	for attemt := 0; attemt < 30; attemt = attemt + 1 {
+		err = initOne(config)
+		if err == nil {
+			return
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return err
 }

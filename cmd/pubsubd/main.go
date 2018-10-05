@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -55,17 +54,13 @@ func main() {
 }
 
 func initHub(nats string) {
-	for attemt := 0; attemt < 30; attemt = attemt + 1 {
-		err := pubsub.Init(pubsub.HubConfig{
-			"driver": "nats",
-			"url":    nats,
-		})
-		if err == nil {
-			return
-		}
-		time.Sleep(1 * time.Second)
+	err := pubsub.Init(pubsub.HubConfig{
+		"driver": "nats",
+		"url":    nats,
+	})
+	if err != nil {
+		log.Fatalf("cannot initialize hub")
 	}
-	log.Fatalf("cannot initialize hub")
 }
 
 var server *http.Server
