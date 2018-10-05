@@ -86,11 +86,11 @@ func stopServer() {
 }
 
 func makeHandler() http.Handler {
-	mux := chi.NewRouter()
+	r := chi.NewRouter()
 
-	mux.Use(middleware.RequestID)
-	mux.Use(middleware.Logger)
-	mux.Use(middleware.Recoverer)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	// Basic CORS
 	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
@@ -104,11 +104,13 @@ func makeHandler() http.Handler {
 	})
 	r.Use(cors.Handler)
 
-	mux.Group(func(r chi.Router) {
-		// TODO configurable api path
-		r.Get("/api/event/stream", sse.GetEventStream)
-		r.Get("/api/event/stream/{channel}", sse.GetEventStream)
-	})
+	r.Group(eventAPI)
 
-	return mux
+	return r
+}
+
+func eventAPI(r chi.Router) {
+	// TODO configurable api path
+	r.Get("/api/event/stream", sse.GetEventStream)
+	r.Get("/api/event/stream/{channel}", sse.GetEventStream)
 }
