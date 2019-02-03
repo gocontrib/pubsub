@@ -14,6 +14,7 @@ import (
 	_ "github.com/gocontrib/pubsub/nats"
 	_ "github.com/gocontrib/pubsub/redis"
 	"github.com/gocontrib/pubsub/sse"
+	"github.com/gorilla/handlers"
 )
 
 func opt(name, defval string) string {
@@ -89,7 +90,7 @@ func makeHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
+	r.Use(Logger)
 	r.Use(middleware.Recoverer)
 
 	// Basic CORS
@@ -113,4 +114,8 @@ func eventAPI(r chi.Router) {
 	// TODO configurable api path
 	r.Get("/api/event/stream", sse.GetEventStream)
 	r.Get("/api/event/stream/{channel}", sse.GetEventStream)
+}
+
+func Logger(next http.Handler) http.Handler {
+	return handlers.LoggingHandler(os.Stdout, next)
 }
