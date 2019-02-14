@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gocontrib/log"
+	log "github.com/sirupsen/logrus"
 )
 
 // HubConfig defines input for Driver.Create function.

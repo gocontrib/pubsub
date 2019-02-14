@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gocontrib/log"
+	log "github.com/sirupsen/logrus"
 )
 
 var (

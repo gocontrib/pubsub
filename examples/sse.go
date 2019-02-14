@@ -7,8 +7,8 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/gocontrib/log"
 	"github.com/gocontrib/pubsub"
+	log "github.com/sirupsen/logrus"
 )
 
 // SendEvents streams events from specified channels as Server Sent Events packets

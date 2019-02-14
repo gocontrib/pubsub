@@ -1,9 +1,9 @@
 package nats
 
 import (
-	"github.com/gocontrib/log"
 	"github.com/gocontrib/pubsub"
 	"github.com/nats-io/nats"
+	log "github.com/sirupsen/logrus"
 )
 
 func init() {

@@ -3,7 +3,7 @@ package pubsub
 import (
 	"sync"
 
-	"github.com/gocontrib/log"
+	log "github.com/sirupsen/logrus"
 )
 
 // NewHub creates new in-process pubsub hub.

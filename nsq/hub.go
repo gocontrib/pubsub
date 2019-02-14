@@ -3,9 +3,9 @@ package nsq
 import (
 	"strings"
 
-	"github.com/gocontrib/log"
 	"github.com/gocontrib/pubsub"
-	"github.com/nsqio/go-nsq"
+	nsq "github.com/nsqio/go-nsq"
+	log "github.com/sirupsen/logrus"
 )
 
 // NSQ pubsub hub

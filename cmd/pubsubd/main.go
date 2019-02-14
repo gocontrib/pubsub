@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +15,7 @@ import (
 	_ "github.com/gocontrib/pubsub/redis"
 	"github.com/gocontrib/pubsub/sse"
 	"github.com/gorilla/handlers"
+	log "github.com/sirupsen/logrus"
 )
 
 func opt(name, defval string) string {

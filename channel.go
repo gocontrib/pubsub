@@ -3,7 +3,7 @@ package pubsub
 import (
 	"runtime/debug"
 
-	"github.com/gocontrib/log"
+	log "github.com/sirupsen/logrus"
 )
 
 // Channel manages topic subscriptions.

@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/gocontrib/log"
 	"github.com/gocontrib/pubsub"
+	log "github.com/sirupsen/logrus"
 )
 
 // Subscription channel.

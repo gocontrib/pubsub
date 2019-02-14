@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/gocontrib/log"
 	"github.com/gocontrib/pubsub"
+	log "github.com/sirupsen/logrus"
 )
 
 // GetEventStream streams events in text/event-stream format.

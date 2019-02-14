@@ -3,8 +3,8 @@ package redis
 import (
 	"os"
 
-	"github.com/gocontrib/log"
 	"github.com/gocontrib/pubsub"
+	log "github.com/sirupsen/logrus"
 	"github.com/soveran/redisurl"
 )
 
