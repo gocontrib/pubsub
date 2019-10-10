@@ -2,7 +2,7 @@ package nats
 
 import (
 	"github.com/gocontrib/pubsub"
-	"github.com/nats-io/nats"
+	nats "github.com/nats-io/nats.go"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/gocontrib/pubsub"
-	"github.com/nats-io/nats"
+	nats "github.com/nats-io/nats.go"
 )
 
 // pubsub.Hub impl
