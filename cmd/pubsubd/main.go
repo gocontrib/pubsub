@@ -2,11 +2,16 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 
+	health "github.com/InVisionApp/go-health/v2"
+	"github.com/InVisionApp/go-health/v2/checkers"
+	healthHandlers "github.com/InVisionApp/go-health/v2/handlers"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -26,9 +31,12 @@ func opt(name, defval string) string {
 	return val
 }
 
+var (
+	nats string = opt("NATS_URI", "nats:4222")
+)
+
 func main() {
 	addr := opt("PUBSUBD_ADDR", ":4302")
-	nats := opt("NATS_URI", "nats:4222")
 
 	fmt.Printf("starting pubsub --addr %s --nats %s", addr, nats)
 
@@ -115,6 +123,40 @@ func eventAPI(r chi.Router) {
 	// TODO configurable api path
 	r.Get("/api/event/stream", sse.GetEventStream)
 	r.Get("/api/event/stream/{channel}", sse.GetEventStream)
+}
+
+func healthAPI(r chi.Router) {
+	h := health.New()
+
+	natsURL, err := url.Parse(nats)
+	if err != nil {
+		log.Fatalf("invalid NATS URL: %v", err)
+	}
+
+	nats, err := checkers.NewReachableChecker(&checkers.ReachableConfig{
+		URL: natsURL,
+	})
+	if err != nil {
+		log.Fatalf("NewReachableChecker fail for nats: %v", err)
+	}
+
+	inerval := time.Duration(10) * time.Second
+
+	h.AddChecks([]*health.Config{
+		{
+			Name:     "nats",
+			Checker:  nats,
+			Interval: inerval,
+			Fatal:    true,
+		},
+	})
+
+	if err := h.Start(); err != nil {
+		log.Fatalf("unable to start healthcheck: %v", err)
+	}
+
+	r.Head("/api/pubsub/health", healthHandlers.NewBasicHandlerFunc(h))
+	r.Get("/api/pubsub/health", healthHandlers.NewJSONHandlerFunc(h, nil))
 }
 
 func Logger(next http.Handler) http.Handler {
