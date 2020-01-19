@@ -115,6 +115,7 @@ func makeHandler() http.Handler {
 	r.Use(cors.Handler)
 
 	r.Group(eventAPI)
+	r.Group(healthAPI)
 
 	return r
 }
