@@ -29,7 +29,12 @@ func Open(URL ...string) (pubsub.Hub, error) {
 
 	log.Info("connecting to nats hub: %v", URL)
 
-	conn, err := nats.Connect(URL[0])
+	conn, err := nats.Connect(URL[0], func(options *nats.Options) error {
+		options.Name = "pandora-pubsub"
+		options.AllowReconnect = true
+		options.Verbose = true
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -14,6 +14,7 @@ require (
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/nats-io/jwt v0.3.2 // indirect
+	github.com/nats-io/nats-server/v2 v2.1.4 // indirect
 	github.com/nats-io/nats.go v1.9.1
 	github.com/nsqio/go-nsq v1.0.8
 	github.com/sirupsen/logrus v1.4.2
